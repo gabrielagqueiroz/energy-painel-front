@@ -1,24 +1,15 @@
-// import { api } from "../../api";
+import { api } from "../../api";
 
 export const userService = {
   login: async (user: {
     email: string;
     password: string;
   }): Promise<LoginResponse> => {
-    // const response = await api.post("/login", user);
-
-    if (user.email === "teste@email.com" && user.password === "123456") {
-      return {
-        token: "mocked-token",
-      };
-    } else {
-      throw new Error("Login failed");
+    const response = await api.post("/login", user); 
+    if (response) {
+      return response.data;
     }
-  },
-  //   if (response) {
-  //     return response.data;
-  //   }
 
-  //   throw new Error("Login failed");
-  // },
+    throw new Error("Login failed");
+  },
 };

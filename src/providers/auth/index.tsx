@@ -19,11 +19,15 @@ const AuthContext = createContext<AuthContentProps>({} as AuthContentProps);
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<UserStorage | null>(() => {
     const storedUser = localStorage.getItem("user");
+
+    console.log(storedUser)
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
   const login = useCallback(async (user: UserProps) => {
     const { response } = await userService.login(user);
+
+    console.log(response)
 
     const storageUser: UserStorage = {
       email: user.email,
@@ -39,11 +43,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem("user");
   }, []);
 
-  useEffect(() => {
-    return () => {
-      localStorage.removeItem("user");
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     localStorage.removeItem("user");
+  //   };
+  // }, []);
 
   const contextValue = useMemo(
     () => ({ user, login, logout }),
