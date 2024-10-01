@@ -12,7 +12,7 @@ export default function Breadcrumbs() {
     return (
       <Breadcrumb.Item key={url}>
         {index === pathSnippets.length - 1 ? (
-          <Link to={url} className="!bg-[#003c76]">
+          <Link to={url}>
             {capitalizedSnippet}
           </Link>
         ) : (

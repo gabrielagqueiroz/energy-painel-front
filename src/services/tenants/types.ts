@@ -1,14 +1,14 @@
 export type DataTenants = {
-    id: number;
-    uuid: string;
+    id?: number;
+    uuid?: string;
     name: string;
     email: string;
     document: string;
     phone: string;
+    active: boolean;
     logo: string | null;
-    active: number;
     address: {
-      id: number;
+      id?: number;
       street: string;
       number: string;
       complement?: string;
@@ -18,6 +18,7 @@ export type DataTenants = {
       country: string;
       zipcode: string;
     };
+    actions?: string;
 };
 
 
