@@ -1,36 +1,36 @@
-import {api} from '../../api';
-import { TenantResponse, DataTenants } from './types';
+import { api } from "../../api";
+import { TenantResponse, DataTenants } from "./types";
 
 export const tenantService = {
-    getTenants: async (): Promise<TenantResponse> => {
-      try {
-        const token = localStorage.getItem('user');
-        if (!token) {
-          console.error("No token found in local storage");
-          throw new Error("No token found");
-        } 
-        const user = JSON.parse(token);
-        const response = await api.get("/tenants", {
-          headers: {
-              Authorization: `Bearer ${user.token}`
-          }
-        });
-        console.log("API response:", response.data)
-        return response.data;
-      } catch (error) {
-        console.error("Error fetching tenants:", error);
-        throw new Error("Failed to fetch tenants");
-      }
-    },
+  getTenants: async (): Promise<TenantResponse> => {
+    try {
+      const response = await api.get("/tenants");
+      // console.log("API response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar locatario:", error);
+      throw new Error("Falha ao buscar locatario");
+    }
+  },
 
-      
-    createTenant: async (tenantData: DataTenants): Promise<DataTenants> => {
-        try {
-          const response = await api.post("/tenants", tenantData);
-          return response.data;
-        } catch (error) {
-          throw new Error("Failed to create tenant");
-        }
-    },
-      
+  postTenant: async (tenantData: DataTenants): Promise<DataTenants> => {
+    try {
+      // console.log("Dados do locatário sendo enviados:", tenantData);
+      const response = await api.post("/tenants/store", tenantData);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao criar locatário:", error);
+      throw new Error("Falha ao criar locatário");
+    }
+  },
+
+  deleteTenant: async (uuid: string): Promise<void> => {
+    try {
+      const response = await api.delete(`tenants/${uuid}/destroy`);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao deletar locatário:", error);
+      throw new Error("Falha ao excluir locatário");
+    }
+  },
 };
