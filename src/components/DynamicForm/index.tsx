@@ -1,12 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Button, Modal, Form, Input, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useForm, Controller } from "react-hook-form";
-import { useTenants } from "../../services/tenants/useTenants";
+import { useTenantsContext } from "../../services/tenants/tenantsContext";
 import { DataTenants } from "../../services/tenants/types";
 
-const RegisterTenants: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+interface DynamicFormProps {
+  uuid: string | undefined,
+  setUuid: any
+  EditMode: boolean,
+  setEditMode: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const DynamicForm = ({
+  uuid,
+  setUuid,
+  EditMode,
+  setEditMode
+} : DynamicFormProps) => {
+  
   const {
     control,
     handleSubmit,
@@ -16,23 +28,34 @@ const RegisterTenants: React.FC = () => {
     reset,
     formState: { errors },
   } = useForm();
-  const { createTenant, cepChange } = useTenants();
+  const {
+    cepChange,
+    createTenant,
+    updateTenant,
+    isModalOpen,
+    setIsModalOpen,
+    tenants,
+  } = useTenantsContext();
 
-  const showModal = () => {
+
+  const handleOpenModal = () => {
     setIsModalOpen(true);
+    setEditMode(false);
+    setUuid(undefined);
+    reset();
   };
+
   const handleCancel = () => {
     setIsModalOpen(false);
-    reset()
+    setUuid(undefined);
+    reset();
   };
 
   const onSubmit = (data: any) => {
-    try{
+    try {
       const tenantData: DataTenants = {
-        name: data.name,
-        email: data.email,
-        document: data.document,
-        phone: data.phone,
+        ...data,
+        uuid: uuid,
         active: true,
         logo: null,
         address: {
@@ -45,28 +68,68 @@ const RegisterTenants: React.FC = () => {
           country: "Brasil",
         },
       };
-      createTenant(tenantData);
-      handleCancel();
-      reset();
-      message.success("Locatário cadastrado com sucesso!");
-    }catch (error) {
-      message.error("Não foi possivel cadastrar Locatário");
+
+      if (EditMode && uuid) {
+        updateTenant(tenantData);
+        console.log("dados do locatario editado:", tenantData);
+        message.success("Locatário atualizado!");
+        setEditMode(false); //AQUI
+        handleCancel();
+        reset();
+      } else {
+        createTenant(tenantData);
+        console.log("locatario criado:", tenantData);
+        message.success("Locatário cadastrado!");
+        handleCancel();
+        reset();
+      }
+    } catch (error) {
+      message.error("Não foi possível cadastrar Locatário");
       throw new Error("Falha ao criar locatário");
     }
-  }
+  };
+
+  useEffect(() => {
+    if (EditMode && uuid) {
+      setEditMode(true);
+      console.log("UUID recebido:", uuid);
+      console.log("Dados do tenants recebidos:", tenants);
+      const tenant = tenants.find((tenant) => tenant.uuid === uuid);
+      if (tenant) {
+        const { name, email, document, phone, address } = tenant;
+        console.log("Preenchendo o formulário com os dados:", tenant);
+        setValue("name", name);
+        setValue("email", email);
+        setValue("document", document);
+        setValue("phone", phone);
+        setValue("street", address.street);
+        setValue("number", address.number);
+        setValue("neighborhood", address.neighborhood);
+        setValue("city", address.city);
+        setValue("state", address.state);
+        setValue("zipcode", address.zipcode);
+      } else {
+        console.log("Dados insuficientes para preencher o formulário.");
+        reset();
+        setEditMode(false);
+      }
+    }
+  }, [uuid, EditMode]);
 
   return (
     <div className="fixed flex right-0 py-5 mr-11">
-      <Button
-        onClick={showModal}
-        size="middle"
-        className="bg-[#003c76] text-white h-9"
-      >
+      <Button onClick={handleOpenModal} size="middle" type="primary">
         Cadastrar
         <PlusOutlined />
       </Button>
       <Modal
-        title="Cadastrar Locatário"
+        title={
+          <div
+            className="text-center text-lg text-[#002346] font-semibold py-4"
+          >
+            {EditMode ? "Editar Locatário" : "Cadastrar Locatário"}
+          </div>
+        }
         open={isModalOpen}
         onCancel={handleCancel}
         footer={[
@@ -243,7 +306,23 @@ const RegisterTenants: React.FC = () => {
               )}
             />
           </Form.Item>
-
+          {/* <Form.Item
+            label="Complemento"
+            validateStatus={errors.complement ? "error" : ""}
+            help={errors.complement?.message?.toString()}
+          >
+            <Controller
+              name="complement"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  placeholder="Digite o completo"
+                  value={watch("complement")}
+                />
+              )}
+            />
+          </Form.Item> */}
           <Form.Item
             label="Bairro"
             validateStatus={errors.neighborhood ? "error" : ""}
@@ -254,7 +333,10 @@ const RegisterTenants: React.FC = () => {
               control={control}
               rules={{
                 required: "Bairro é obrigatório",
-                pattern: {value: /^[a-zA-Z\s]+$/, message: "Bairro deve ter apenas letras"},
+                pattern: {
+                  value: /^[\u00C0-\u017F\u00FFa-zA-Z\s]+$/,
+                  message: "Bairro deve ter apenas letras",
+                },
               }}
               render={({ field }) => (
                 <Input
@@ -276,7 +358,10 @@ const RegisterTenants: React.FC = () => {
               control={control}
               rules={{
                 required: "Cidade é obrigatório",
-                pattern: {value: /^[a-zA-Z\s]+$/, message: "Cidade deve ter apenas letras"},
+                pattern: {
+                  value: /^[\u00C0-\u017F\u00FFa-zA-Z\s]+$/,
+                  message: "Cidade deve ter apenas letras",
+                },
               }}
               render={({ field }) => (
                 <Input
@@ -298,8 +383,10 @@ const RegisterTenants: React.FC = () => {
               control={control}
               rules={{
                 required: "Estado é obrigatório",
-                pattern: {value: /^[a-zA-Z\s]+$/, message: "Estado deve ter apenas letras"},
-
+                pattern: {
+                  value: /^[\u00C0-\u017F\u00FFa-zA-Z\s]+$/,
+                  message: "Estado deve ter apenas letras",
+                },
               }}
               render={({ field }) => (
                 <Input
@@ -316,4 +403,4 @@ const RegisterTenants: React.FC = () => {
   );
 };
 
-export default RegisterTenants;
+export default DynamicForm;

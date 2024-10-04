@@ -5,7 +5,6 @@ export const tenantService = {
   getTenants: async (): Promise<TenantResponse> => {
     try {
       const response = await api.get("/tenants");
-      // console.log("API response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Erro ao buscar locatario:", error);
@@ -15,12 +14,21 @@ export const tenantService = {
 
   postTenant: async (tenantData: DataTenants): Promise<DataTenants> => {
     try {
-      // console.log("Dados do locatário sendo enviados:", tenantData);
       const response = await api.post("/tenants/store", tenantData);
       return response.data;
     } catch (error) {
       console.error("Erro ao criar locatário:", error);
       throw new Error("Falha ao criar locatário");
+    }
+  },
+
+  updateTenant: async (tenantData: DataTenants): Promise<DataTenants> => {
+    try {
+      const response = await api.put(`tenants/${tenantData.uuid}/update`, tenantData);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao editar locatário:", error);
+      throw new Error("Falha ao editar locatário");
     }
   },
 
