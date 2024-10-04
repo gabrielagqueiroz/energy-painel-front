@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type {
   InputRef,
   TableColumnsType,
@@ -10,29 +10,37 @@ import {
   DeleteOutlined,
   EditOutlined,
 } from "@ant-design/icons";
-import { Layout, Button, Input, Space, Table, Alert, Spin } from "antd";
+import { Layout, Button, Input, Space, Table } from "antd";
 import type { FilterDropdownProps } from "antd/es/table/interface";
 import Highlighter from "react-highlight-words";
 import { DataTenants } from "../../services/tenants/types";
-import { useTenants } from "../../services/tenants/useTenants";
-
+import { useTenantsContext } from "../../services/tenants/tenantsContext";
+import LoadingError from "../LoadingError";
 
 const { Content } = Layout;
+
+interface TableListProps {
+  uuid: string | undefined,
+  setUuid: any,
+  setEditMode: any
+}
 
 type OnChange = NonNullable<TableProps<DataTenants>["onChange"]>;
 type GetSingle<T> = T extends (infer U)[] ? U : never;
 type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
-const TableList: React.FC = () => {
+const TableList = ({setUuid, setEditMode } : TableListProps ) => {
   const [sortedInfo, setSortedInfo] = useState<Sorts>({});
-  const { tenants, loading, error, deleteTenant } = useTenants();
+  const { tenants, loading, error, deleteTenant, setIsModalOpen } = useTenantsContext();
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState<string>("");
   const searchInput = useRef<InputRef>(null);
 
   const handleChange: OnChange = (sorter) => {
+    console.log('Various parameters', sorter);
     setSortedInfo(sorter as Sorts);
   };
+
   const uniqueStates = [...new Set(tenants.map((item) => item.address.state))];
   const filters = uniqueStates
     .map((state) => ({ text: state, value: state }))
@@ -46,6 +54,7 @@ const TableList: React.FC = () => {
     confirm();
     setSearchText(selectedKeys[0]);
     setSearchedColumn(dataIndex);
+    close();
   };
 
   const handleReset = (clearFilters: () => void) => {
@@ -123,7 +132,7 @@ const TableList: React.FC = () => {
         className={`text-${filtered ? "[#1677ff]" : "inherit"}`}
       />
     ),
-    onFilter: (value, record) =>
+    onFilter: (value, record: any) =>
       record[dataIndex]
         .toString()
         .toLowerCase()
@@ -146,26 +155,6 @@ const TableList: React.FC = () => {
       ),
   });
 
-  if (loading) {
-    return (
-      <Layout>
-        <Content className="p-8 min-h-[400px] flex justify-center items-center">
-          <Spin tip="Carregando..." size="large" />
-        </Content>
-      </Layout>
-    );
-  }
-  
-  if (error) {
-    return (
-      <Layout>
-        <Content className="p-8 min-h-[400px]">
-          <Alert message="Erro ao carregar dados" type="error" showIcon />
-        </Content>
-      </Layout>
-    );
-  }
-
   const columns: TableColumnsType<DataTenants> = [
     {
       title: "Nome",
@@ -173,7 +162,7 @@ const TableList: React.FC = () => {
       key: "name",
       width: "20%",
       ...getColumnSearchProps("name"),
-      sorter: (a, b) => a.name.length - b.name.length,
+      sorter: (a, b) => a.name.localeCompare(b.name),
       sortOrder: sortedInfo.columnKey === "name" ? sortedInfo.order : null,
       ellipsis: true,
     },
@@ -235,7 +224,12 @@ const TableList: React.FC = () => {
           <Button
             key="edit"
             size="small"
-            // onClick={() => handleEdit(record)}
+            onClick={() => {
+              console.log("UUID ao clicar em editar:", record.uuid);
+              record.uuid && setUuid(record.uuid);
+              setEditMode(true);
+              setIsModalOpen(true);
+            }}
           >
             <EditOutlined />
           </Button>
@@ -248,17 +242,23 @@ const TableList: React.FC = () => {
           </Button>
         </Space>
       ),
-    }
+    },
   ];
 
   return (
     <Layout>
       <Content className="p-8 min-h-[400px]">
-        <Table<DataTenants>
-          columns={columns}
-          dataSource={tenants.map((tenant) => ({ ...tenant, key: tenant.id }))}
-          onChange={handleChange}
-        />
+        <LoadingError loading={loading} error={error}>
+          <Table<DataTenants>
+            columns={columns}
+            dataSource={tenants.map((tenant) => ({
+              ...tenant,
+              key: tenant.id,
+            }))}
+            onChange={handleChange}
+            scroll={{ x: "max-content" }}
+          />
+        </LoadingError>
       </Content>
     </Layout>
   );

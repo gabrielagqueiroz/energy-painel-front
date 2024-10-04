@@ -1,21 +1,44 @@
 import { useState, useEffect } from "react";
-import { message } from 'antd';
+import { message } from "antd";
 import { getCep } from "../../api";
 import { tenantService } from "./tenantsServices";
 import { DataTenants } from "./types";
 
-export const useTenants = (): {
+export interface TenantsProps {
   tenants: DataTenants[];
   loading: boolean;
   error: Error | null;
+  isModalOpen: boolean;
+  setIsModalOpen: (isModalOpen: boolean) => void;
+  tenantData: DataTenants | null;
+  setTenantData: (tenantData: DataTenants | null) => void;
   fetchTenants: () => Promise<void>;
-  cepChange: (cep: string, setValue: any, setFocus: any) => Promise<void>;
   createTenant: (tenantData: any) => Promise<void>;
+  updateTenant: (tenantData: any) => Promise<void>;
   deleteTenant: (uuid: string) => Promise<void>;
-} => {
+  cepChange: (cep: string, setValue: any, setFocus: any) => Promise<void>;
+}
+
+export const useTenants = (): TenantsProps => {
   const [tenants, setTenants] = useState<DataTenants[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tenantData, setTenantData] = useState<DataTenants | null>(null);
+
+  const cepChange = async (cep: string, setValue: any, setFocus: any) => {
+    try{
+      const response = await getCep(cep);
+      const data = response.data;
+      setValue("street", data.logradouro);
+      setValue("neighborhood", data.bairro);
+      setValue("city", data.localidade);
+      setValue("state", data.uf);
+      setFocus("number");
+    } catch(error) {
+      setError(error instanceof Error ? error : new Error("Ocorreu um erro"));
+    }
+  };
 
   const fetchTenants = async () => {
     try {
@@ -24,32 +47,48 @@ export const useTenants = (): {
       setTenants(response.response.data);
       setError(null);
     } catch (error) {
-      console.error("Erro ao buscar locatario:", error);
       setError(error instanceof Error ? error : new Error("Ocorreu um erro"));
     } finally {
       setLoading(false);
     }
   };
 
-  const cepChange = async (cep: string, setValue: any, setFocus: any) => {
-    const response = await getCep(cep);
-    const data = response.data; 
-    setValue("street", data.logradouro);
-    setValue("neighborhood", data.bairro);
-    setValue("city", data.localidade);
-    setValue("state", data.uf);
-    setFocus("number");
-  };
-
   const createTenant = async (tenantData: any) => {
     try {
       setLoading(true);
-      console.log(tenantData);
-      const response = await tenantService.postTenant(tenantData);
-      console.log("Locatário cadastrado", response);
-      fetchTenants();
+      console.log("Dados do locatário:", tenantData);
+      await tenantService.postTenant(tenantData);
+      await fetchTenants();
     } catch (error) {
       setError(error instanceof Error ? error : new Error("Ocorreu um erro"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateTenant = async (tenantData: DataTenants) => {
+    try {
+      setLoading(true);
+      await tenantService.updateTenant(tenantData);
+      await fetchTenants();
+    } catch (error) {
+      setError(error instanceof Error ? error : new Error("Ocorreu um erro"));
+      message.error("Não foi possível editar Locatário");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const deleteTenant = async (uuid: string) => {
+    try {
+      setLoading(true);
+      await tenantService.deleteTenant(uuid);
+      message.success("Locatário excluido com sucesso!");
+      await fetchTenants();
+    } catch (error) {
+      setError(error instanceof Error ? error : new Error("Ocorreu um erro"));
+      message.error("Não foi possivel excluir Locatário");
     } finally {
       setLoading(false);
     }
@@ -59,20 +98,19 @@ export const useTenants = (): {
     fetchTenants();
   }, []);
 
-  const deleteTenant = async (uuid: string) => {
-    try {
-      setLoading(true);
-      const response = await tenantService.deleteTenant(uuid);
-      console.log("Locatário deletado", response);
-      message.success("Locatário excluido com sucesso!")
-      fetchTenants();
-    } catch (error) {
-      setError(error instanceof Error ? error : new Error("Ocorreu um erro"));
-      message.error("Não foi possivel excluir Locatário")
-    } finally {
-      setLoading(false);
-    }
+  return {
+    tenants,
+    loading,
+    error,
+    fetchTenants,
+    createTenant,
+    updateTenant,
+    deleteTenant,
+    cepChange,
+    isModalOpen,
+    setIsModalOpen,
+    tenantData,
+    setTenantData,
   };
-
-  return { tenants, loading, error, fetchTenants, createTenant, deleteTenant, cepChange };
 };
+

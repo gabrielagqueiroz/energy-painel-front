@@ -12,6 +12,7 @@ export type UserProps = {
 export type UserStorage = {
   email: string;
   token: string;
+  password: string;
 };
 
 export interface AuthContentProps {

@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -32,6 +31,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     const storageUser: UserStorage = {
       email: user.email,
       token: response,
+      password: user.password
     };
 
     setUser(storageUser);
