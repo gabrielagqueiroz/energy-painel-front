@@ -1,23 +1,11 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Button, Modal, Form, Input, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useForm, Controller } from "react-hook-form";
 import { useTenantsContext } from "../../services/tenants/tenantsContext";
 import { DataTenants } from "../../services/tenants/types";
 
-interface DynamicFormProps {
-  uuid: string | undefined,
-  setUuid: any
-  EditMode: boolean,
-  setEditMode: React.Dispatch<React.SetStateAction<boolean>>
-}
-
-const DynamicForm = ({
-  uuid,
-  setUuid,
-  EditMode,
-  setEditMode
-} : DynamicFormProps) => {
+const DynamicForm = () => {
   
   const {
     control,
@@ -35,12 +23,15 @@ const DynamicForm = ({
     isModalOpen,
     setIsModalOpen,
     tenants,
+    uuid, setUuid,  EditMode, setEditMode, detailsMode, setDetailsMode
+
   } = useTenantsContext();
 
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
     setEditMode(false);
+    setDetailsMode(false);
     setUuid(undefined);
     reset();
   };
@@ -61,6 +52,7 @@ const DynamicForm = ({
         address: {
           street: data.street,
           number: data.number,
+          complement: data.complement,
           neighborhood: data.neighborhood,
           city: data.city,
           state: data.state,
@@ -71,14 +63,12 @@ const DynamicForm = ({
 
       if (EditMode && uuid) {
         updateTenant(tenantData);
-        console.log("dados do locatario editado:", tenantData);
         message.success("Locatário atualizado!");
-        setEditMode(false); //AQUI
+        setEditMode(false);
         handleCancel();
         reset();
       } else {
         createTenant(tenantData);
-        console.log("locatario criado:", tenantData);
         message.success("Locatário cadastrado!");
         handleCancel();
         reset();
@@ -92,24 +82,21 @@ const DynamicForm = ({
   useEffect(() => {
     if (EditMode && uuid) {
       setEditMode(true);
-      console.log("UUID recebido:", uuid);
-      console.log("Dados do tenants recebidos:", tenants);
       const tenant = tenants.find((tenant) => tenant.uuid === uuid);
       if (tenant) {
         const { name, email, document, phone, address } = tenant;
-        console.log("Preenchendo o formulário com os dados:", tenant);
         setValue("name", name);
         setValue("email", email);
         setValue("document", document);
         setValue("phone", phone);
         setValue("street", address.street);
         setValue("number", address.number);
+        setValue("complement", address.complement);
         setValue("neighborhood", address.neighborhood);
         setValue("city", address.city);
         setValue("state", address.state);
         setValue("zipcode", address.zipcode);
       } else {
-        console.log("Dados insuficientes para preencher o formulário.");
         reset();
         setEditMode(false);
       }
@@ -130,7 +117,7 @@ const DynamicForm = ({
             {EditMode ? "Editar Locatário" : "Cadastrar Locatário"}
           </div>
         }
-        open={isModalOpen}
+        open={isModalOpen && !detailsMode}
         onCancel={handleCancel}
         footer={[
           <Button key="cancel" onClick={handleCancel}>
@@ -306,7 +293,7 @@ const DynamicForm = ({
               )}
             />
           </Form.Item>
-          {/* <Form.Item
+          <Form.Item
             label="Complemento"
             validateStatus={errors.complement ? "error" : ""}
             help={errors.complement?.message?.toString()}
@@ -322,7 +309,7 @@ const DynamicForm = ({
                 />
               )}
             />
-          </Form.Item> */}
+          </Form.Item>
           <Form.Item
             label="Bairro"
             validateStatus={errors.neighborhood ? "error" : ""}

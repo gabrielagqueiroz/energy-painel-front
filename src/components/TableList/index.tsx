@@ -9,6 +9,7 @@ import {
   SearchOutlined,
   DeleteOutlined,
   EditOutlined,
+  MoreOutlined
 } from "@ant-design/icons";
 import { Layout, Button, Input, Space, Table } from "antd";
 import type { FilterDropdownProps } from "antd/es/table/interface";
@@ -19,25 +20,19 @@ import LoadingError from "../LoadingError";
 
 const { Content } = Layout;
 
-interface TableListProps {
-  uuid: string | undefined,
-  setUuid: any,
-  setEditMode: any
-}
-
 type OnChange = NonNullable<TableProps<DataTenants>["onChange"]>;
 type GetSingle<T> = T extends (infer U)[] ? U : never;
 type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
-const TableList = ({setUuid, setEditMode } : TableListProps ) => {
+const TableList = () => {
   const [sortedInfo, setSortedInfo] = useState<Sorts>({});
-  const { tenants, loading, error, deleteTenant, setIsModalOpen } = useTenantsContext();
+  const { tenants, loading, error, deleteTenant, setIsModalOpen, setUuid, setEditMode, setDetailsMode } = useTenantsContext();
+
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState<string>("");
   const searchInput = useRef<InputRef>(null);
 
-  const handleChange: OnChange = (sorter) => {
-    console.log('Various parameters', sorter);
+  const handleChange: OnChange = (_, __, sorter) => {
     setSortedInfo(sorter as Sorts);
   };
 
@@ -174,25 +169,11 @@ const TableList = ({setUuid, setEditMode } : TableListProps ) => {
       ...getColumnSearchProps("document"),
     },
     {
-      title: "CEP",
-      dataIndex: ["address", "zipcode"],
-      key: "zipcode",
+      title: "Telefone",
+      dataIndex: "phone",
+      key: "phone",
       width: "15%",
-      ...getColumnSearchProps("zipcode"),
-    },
-    {
-      title: "Rua",
-      dataIndex: ["address", "street"],
-      key: "street",
-      width: "20%",
-      ...getColumnSearchProps("street"),
-    },
-    {
-      title: "Bairro",
-      dataIndex: ["address", "neighborhood"],
-      key: "neighborhood",
-      width: "15%",
-      ...getColumnSearchProps("neighborhood"),
+      ...getColumnSearchProps("phone"),
     },
     {
       title: "Cidade",
@@ -219,13 +200,13 @@ const TableList = ({setUuid, setEditMode } : TableListProps ) => {
       dataIndex: "actions",
       key: "actions",
       width: "12%",
+      align: "center",
       render: (_, record, index) => (
-        <Space size="middle" key={record.id || index}>
+        <Space size="small" key={record.id || index}>
           <Button
             key="edit"
             size="small"
             onClick={() => {
-              console.log("UUID ao clicar em editar:", record.uuid);
               record.uuid && setUuid(record.uuid);
               setEditMode(true);
               setIsModalOpen(true);
@@ -239,6 +220,18 @@ const TableList = ({setUuid, setEditMode } : TableListProps ) => {
             onClick={() => record.uuid && deleteTenant(record.uuid)}
           >
             <DeleteOutlined />
+          </Button>
+          <Button
+            key="details"
+            size="small"
+            onClick={() => {
+              record.uuid && setUuid(record.uuid);
+              setEditMode(false);
+              setDetailsMode(true);
+              setIsModalOpen(true);
+            }}
+            >
+            <MoreOutlined />
           </Button>
         </Space>
       ),
