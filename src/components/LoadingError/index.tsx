@@ -7,7 +7,7 @@ interface LoadingErrorProps {
     children: React.ReactNode;
   }
 
-const LoadingError:  React.FC<LoadingErrorProps> = ({ loading, error, children }) => {
+const LoadingError = ({ loading, error, children } : LoadingErrorProps) => {
 
   if (loading) {
     return (

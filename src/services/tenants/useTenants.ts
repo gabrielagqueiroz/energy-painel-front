@@ -10,6 +10,12 @@ export interface TenantsProps {
   error: Error | null;
   isModalOpen: boolean;
   setIsModalOpen: (isModalOpen: boolean) => void;
+  uuid: string | undefined,
+  setUuid: any,
+  EditMode: boolean,
+  setEditMode: any,
+  detailsMode: boolean,
+  setDetailsMode: any
   tenantData: DataTenants | null;
   setTenantData: (tenantData: DataTenants | null) => void;
   fetchTenants: () => Promise<void>;
@@ -25,6 +31,9 @@ export const useTenants = (): TenantsProps => {
   const [error, setError] = useState<Error | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tenantData, setTenantData] = useState<DataTenants | null>(null);
+  const [uuid, setUuid] = useState<string | undefined>(undefined);
+  const [EditMode, setEditMode] = useState(false);
+  const [detailsMode, setDetailsMode] = useState(false)
 
   const cepChange = async (cep: string, setValue: any, setFocus: any) => {
     try{
@@ -56,7 +65,6 @@ export const useTenants = (): TenantsProps => {
   const createTenant = async (tenantData: any) => {
     try {
       setLoading(true);
-      console.log("Dados do locatário:", tenantData);
       await tenantService.postTenant(tenantData);
       await fetchTenants();
     } catch (error) {
@@ -102,6 +110,12 @@ export const useTenants = (): TenantsProps => {
     tenants,
     loading,
     error,
+    uuid,
+    setUuid,
+    EditMode,
+    setEditMode,
+    detailsMode,
+    setDetailsMode,
     fetchTenants,
     createTenant,
     updateTenant,
